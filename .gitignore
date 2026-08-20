@@ -7,6 +7,6 @@ dist/
 build/
 coverage/
 *.log
-.DS_Store
+.DS_Storex
 backend/.env
 backend/node_modules/
