@@ -1,6 +1,7 @@
 {
   "name": "executive-assistant",
   "private": true,
+  "main": "electron/main.js",
   "scripts": {
     "dev:frontend": "cd frontend && npm run dev",
     "dev:electron": "electron .",
