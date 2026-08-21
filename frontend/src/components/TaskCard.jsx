@@ -1,12 +1,6 @@
 import { useState } from 'react';
 import { formatDeadline } from '../utils/date';
 
-const PRIORITY_LABEL = {
-  LOW: 'Low',
-  MEDIUM: 'Medium',
-  HIGH: 'High',
-};
-
 function TaskCard({ task, section, onToggleComplete, onDelete, onEdit }) {
   const [isEditing, setIsEditing] = useState(false);
   const [title, setTitle] = useState(task.title);
@@ -25,6 +19,13 @@ function TaskCard({ task, section, onToggleComplete, onDelete, onEdit }) {
     if (trimmed !== task.title) onEdit(task._id, { title: trimmed });
     setIsEditing(false);
   };
+
+  // One quiet line of metadata instead of a row of colored pills.
+  const metaParts = [];
+  if (task.deadline && section !== 'today') metaParts.push(formatDeadline(task.deadline));
+  if (task.estimatedDuration) metaParts.push(`${task.estimatedDuration} min`);
+  if (task.priority === 'HIGH') metaParts.push('High priority');
+  if (isSkipped) metaParts.push('Skipped');
 
   return (
     <div className={`task-card ${isCompleted ? 'is-completed' : ''} ${isSkipped ? 'is-skipped' : ''}`}>
@@ -58,29 +59,16 @@ function TaskCard({ task, section, onToggleComplete, onDelete, onEdit }) {
           </button>
         )}
 
-        <div className="task-card-meta">
-          {task.deadline && section !== 'today' && (
-            <span className={`badge badge-deadline ${section === 'overdue' ? 'badge-overdue' : ''}`}>
-              {formatDeadline(task.deadline)}
-            </span>
-          )}
-          {task.estimatedDuration && (
-            <span className="badge badge-duration">{task.estimatedDuration} min</span>
-          )}
-          {task.priority && task.priority !== 'MEDIUM' && (
-            <span className={`badge badge-priority-${task.priority.toLowerCase()}`}>
-              {PRIORITY_LABEL[task.priority]}
-            </span>
-          )}
-          {isSkipped && <span className="badge badge-skipped">Skipped</span>}
-        </div>
+        {metaParts.length > 0 && (
+          <p className={`task-card-meta ${section === 'overdue' ? 'is-attention' : ''}`}>
+            {metaParts.join('  ·  ')}
+          </p>
+        )}
       </div>
 
-      <div className="task-card-actions">
-        <button type="button" className="icon-button" onClick={() => onDelete(task._id)} aria-label="Delete task">
-          ✕
-        </button>
-      </div>
+      <button type="button" className="task-card-delete" onClick={() => onDelete(task._id)} aria-label="Delete task">
+        Delete
+      </button>
     </div>
   );
 }

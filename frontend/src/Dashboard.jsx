@@ -115,7 +115,7 @@ function Dashboard() {
     <div className="dashboard">
       <header className="dashboard-header">
         <div>
-          <h1>{greeting} 👋</h1>
+          <h1>{greeting}</h1>
           <p className="dashboard-date">{formatFullDate(now)}</p>
         </div>
         <div className="dashboard-clock">{formatClock(now)}</div>
