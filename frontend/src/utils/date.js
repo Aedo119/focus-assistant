@@ -52,3 +52,24 @@ export function formatFullDate(date) {
     day: 'numeric',
   });
 }
+
+// "2026-08-25" — day-granularity, safe to send to pause/generate endpoints
+// without picking up a timezone offset.
+export function toDateOnlyString(date) {
+  const d = new Date(date);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+export const WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+export function formatTime(time) {
+  if (!time) return null;
+  const [h, m] = time.split(':').map(Number);
+  if (Number.isNaN(h)) return time;
+  const d = new Date();
+  d.setHours(h, m || 0, 0, 0);
+  return d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+}

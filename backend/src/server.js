@@ -3,6 +3,7 @@ const cors = require('cors');
 const connectDB = require('./config/db');
 const healthRoutes = require('./routes/health');
 const taskRoutes = require('./routes/tasks');
+const routineRoutes = require('./routes/routines');
 
 const app = express();
 const PORT = process.env.BACKEND_PORT || 3001;
@@ -11,7 +12,8 @@ app.use(cors());
 app.use(express.json());
 
 app.use('/api', healthRoutes);
-app.use('/api/tasks', taskRoutes); // <-- ADDED
+app.use('/api/tasks', taskRoutes);
+app.use('/api/routines', routineRoutes);
 
 async function startBackend() {
   try {

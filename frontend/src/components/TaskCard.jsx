@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { formatDeadline } from '../utils/date';
+import { formatDeadline, formatTime } from '../utils/date';
 
 function TaskCard({ task, section, onToggleComplete, onDelete, onEdit }) {
   const [isEditing, setIsEditing] = useState(false);
@@ -22,6 +22,7 @@ function TaskCard({ task, section, onToggleComplete, onDelete, onEdit }) {
 
   // One quiet line of metadata instead of a row of colored pills.
   const metaParts = [];
+  if (task.time) metaParts.push(formatTime(task.time));
   if (task.deadline && section !== 'today') metaParts.push(formatDeadline(task.deadline));
   if (task.estimatedDuration) metaParts.push(`${task.estimatedDuration} min`);
   if (task.priority === 'HIGH') metaParts.push('High priority');

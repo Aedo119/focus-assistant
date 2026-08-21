@@ -34,6 +34,25 @@ const taskSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    // Time-of-day for the task, "HH:mm" 24h format. Optional — most
+    // ad-hoc tasks won't set this, but routine-generated tasks do.
+    time: {
+      type: String,
+      default: null,
+    },
+    // Present when this task was generated from a Routine (see Routine
+    // model). routineTaskId identifies which task template within the
+    // routine this instance came from, so generation can stay idempotent.
+    routineId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Routine',
+      default: null,
+      index: true,
+    },
+    routineTaskId: {
+      type: String,
+      default: null,
+    },
   },
   { timestamps: true }
 );

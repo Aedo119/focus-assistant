@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import QuickAdd from './components/QuickAdd';
 import TaskSection from './components/TaskSection';
 import * as tasksApi from './api/tasks';
+import * as routinesApi from './api/routines';
 import { isOverdue, isToday, isUpcoming, formatClock, formatFullDate } from './utils/date';
 import './Dashboard.css';
 
@@ -33,6 +34,14 @@ function Dashboard() {
 
     (async () => {
       try {
+        // Turn any active routines scheduled for today into real tasks
+        // before loading the list. Safe to call every time — it's
+        // idempotent on the backend.
+        await routinesApi.generateToday().catch(() => {
+          // Routine generation failing shouldn't block the rest of the
+          // dashboard from loading — the user's own tasks still matter.
+        });
+
         const data = await tasksApi.getTasks();
         if (cancelled) return;
         setTasks(data);
@@ -98,7 +107,14 @@ function Dashboard() {
     const completed = tasks.filter((t) => t.status === 'COMPLETED');
 
     const overdue = active.filter((t) => t.deadline && isOverdue(t.deadline));
-    const today = active.filter((t) => !t.deadline || isToday(t.deadline));
+    const today = active
+      .filter((t) => !t.deadline || isToday(t.deadline))
+      .sort((a, b) => {
+        if (a.time && b.time) return a.time.localeCompare(b.time);
+        if (a.time) return -1;
+        if (b.time) return 1;
+        return 0;
+      });
     const upcoming = active.filter((t) => t.deadline && isUpcoming(t.deadline));
 
     return { today, upcoming, completed, overdue };

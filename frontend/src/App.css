@@ -1,0 +1,30 @@
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.app-nav {
+  display: flex;
+  gap: 0.25rem;
+  padding: 1rem 1.75rem 0;
+  max-width: 640px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.app-nav-item {
+  background: none;
+  border: none;
+  color: var(--text);
+  font-size: 13.5px;
+  padding: 0.5rem 0.15rem;
+  margin-right: 1.25rem;
+  border-bottom: 2px solid transparent;
+}
+
+.app-nav-item.is-active {
+  color: var(--text-h);
+  font-weight: 600;
+  border-bottom-color: var(--accent);
+}
