@@ -1,10 +1,30 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import QuickAdd from './components/QuickAdd';
 import TaskSection from './components/TaskSection';
+import TimelineItem from './components/TimelineItem';
+import AttentionCard from './components/AttentionCard';
 import * as tasksApi from './api/tasks';
 import * as routinesApi from './api/routines';
 import { isOverdue, isToday, isUpcoming, formatClock, formatFullDate } from './utils/date';
 import './Dashboard.css';
+
+function shiftTime(time, minutes) {
+  const [h, m] = time.split(':').map(Number);
+  const d = new Date();
+  d.setHours(h, (m || 0) + minutes, 0, 0);
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
+
+function isTaskCurrent(task, now) {
+  if (!task.time || task.status === 'COMPLETED') return false;
+  const [h, m] = task.time.split(':').map(Number);
+  if (Number.isNaN(h)) return false;
+  const start = new Date(now);
+  start.setHours(h, m || 0, 0, 0);
+  const durationMs = (task.estimatedDuration || 30) * 60 * 1000;
+  const end = new Date(start.getTime() + durationMs);
+  return now >= start && now <= end;
+}
 
 function Dashboard() {
   const [tasks, setTasks] = useState([]);
@@ -15,18 +35,6 @@ function Dashboard() {
   useEffect(() => {
     const clock = setInterval(() => setNow(new Date()), 30 * 1000);
     return () => clearInterval(clock);
-  }, []);
-
-  const loadTasks = useCallback(async () => {
-    try {
-      const data = await tasksApi.getTasks();
-      setTasks(data);
-      setError(null);
-    } catch (err) {
-      setError(err.message || 'Failed to load tasks');
-    } finally {
-      setLoading(false);
-    }
   }, []);
 
   useEffect(() => {
@@ -58,6 +66,16 @@ function Dashboard() {
     };
   }, []);
 
+  const reload = async () => {
+    try {
+      const data = await tasksApi.getTasks();
+      setTasks(data);
+      setError(null);
+    } catch (err) {
+      setError(err.message || 'Failed to load tasks');
+    }
+  };
+
   const handleAdd = async (data) => {
     try {
       const task = await tasksApi.createTask(data);
@@ -69,14 +87,33 @@ function Dashboard() {
 
   const handleToggleComplete = async (task) => {
     const newStatus = task.status === 'COMPLETED' ? 'PENDING' : 'COMPLETED';
-    // Optimistic update so the UI feels instant.
     setTasks((prev) => prev.map((t) => (t._id === task._id ? { ...t, status: newStatus } : t)));
     try {
       const updated = await tasksApi.updateTask(task._id, { status: newStatus });
       setTasks((prev) => prev.map((t) => (t._id === updated._id ? updated : t)));
     } catch (err) {
       setError(err.message || 'Failed to update task');
-      loadTasks();
+      reload();
+    }
+  };
+
+  const handleSnooze = async (task) => {
+    try {
+      let updated;
+      if (task.time) {
+        const newTime = shiftTime(task.time, 10);
+        const newDeadline = new Date(task.deadline);
+        const [h, m] = newTime.split(':').map(Number);
+        newDeadline.setHours(h, m, 0, 0);
+        updated = await tasksApi.updateTask(task._id, { time: newTime, deadline: newDeadline.toISOString() });
+      } else {
+        const newDeadline = new Date(task.deadline || Date.now());
+        newDeadline.setDate(newDeadline.getDate() + 1);
+        updated = await tasksApi.updateTask(task._id, { deadline: newDeadline.toISOString() });
+      }
+      setTasks((prev) => prev.map((t) => (t._id === updated._id ? updated : t)));
+    } catch (err) {
+      setError(err.message || 'Failed to reschedule task');
     }
   };
 
@@ -87,7 +124,7 @@ function Dashboard() {
       setTasks((prev) => prev.map((t) => (t._id === updated._id ? updated : t)));
     } catch (err) {
       setError(err.message || 'Failed to update task');
-      loadTasks();
+      reload();
     }
   };
 
@@ -107,8 +144,8 @@ function Dashboard() {
     const completed = tasks.filter((t) => t.status === 'COMPLETED');
 
     const overdue = active.filter((t) => t.deadline && isOverdue(t.deadline));
-    const today = active
-      .filter((t) => !t.deadline || isToday(t.deadline))
+    const today = tasks
+      .filter((t) => t.status !== 'CANCELLED' && (!t.deadline || isToday(t.deadline)))
       .sort((a, b) => {
         if (a.time && b.time) return a.time.localeCompare(b.time);
         if (a.time) return -1;
@@ -120,6 +157,11 @@ function Dashboard() {
     return { today, upcoming, completed, overdue };
   }, [tasks]);
 
+  const attentionTask = useMemo(() => {
+    if (buckets.overdue.length > 0) return buckets.overdue[0];
+    return buckets.today.find((t) => isTaskCurrent(t, now)) || null;
+  }, [buckets, now]);
+
   const greeting = useMemo(() => {
     const hour = now.getHours();
     if (hour < 12) return 'Good morning';
@@ -128,73 +170,79 @@ function Dashboard() {
   }, [now]);
 
   return (
-    <div className="dashboard">
-      <header className="dashboard-header">
+    <div className="today-page">
+      <header className="today-header">
         <div>
           <h1>{greeting}</h1>
-          <p className="dashboard-date">{formatFullDate(now)}</p>
+          <p className="today-date">{formatFullDate(now)}</p>
+          <p className="today-subtitle">Here is what is happening today.</p>
         </div>
-        <div className="dashboard-clock">{formatClock(now)}</div>
+        <div className="today-clock">{formatClock(now)}</div>
       </header>
-
-      <QuickAdd onAdd={handleAdd} />
 
       {error && (
         <div className="dashboard-error">
           {error}
-          <button type="button" onClick={loadTasks}>
+          <button type="button" onClick={reload}>
             Retry
           </button>
         </div>
       )}
 
-      {loading ? (
-        <p className="dashboard-loading">Loading your day...</p>
-      ) : (
-        <div className="dashboard-sections">
-          {buckets.overdue.length > 0 && (
-            <TaskSection
-              id="overdue"
-              title="Needs attention"
-              tone="overdue"
-              tasks={buckets.overdue}
-              onToggleComplete={handleToggleComplete}
-              onDelete={handleDelete}
-              onEdit={handleEdit}
-            />
+      <div className="today-layout">
+        <div className="today-main">
+          <p className="timeline-label">Today</p>
+
+          {loading ? (
+            <p className="dashboard-loading">Loading your day...</p>
+          ) : buckets.today.length === 0 ? (
+            <p className="task-section-empty">
+              Nothing planned for today. Add something below, or enjoy the space.
+            </p>
+          ) : (
+            <div className="timeline">
+              {buckets.today.map((task, i) => (
+                <TimelineItem
+                  key={task._id}
+                  task={task}
+                  isCurrent={isTaskCurrent(task, now)}
+                  isLast={i === buckets.today.length - 1}
+                  onToggleComplete={handleToggleComplete}
+                />
+              ))}
+            </div>
           )}
+        </div>
 
-          <TaskSection
-            id="today"
-            title="Today"
-            tasks={buckets.today}
-            emptyMessage="Nothing planned for today. Add something above, or enjoy the space."
-            onToggleComplete={handleToggleComplete}
-            onDelete={handleDelete}
-            onEdit={handleEdit}
-          />
+        <div className="today-side">
+          <AttentionCard task={attentionTask} onDone={handleToggleComplete} onSnooze={handleSnooze} />
+        </div>
+      </div>
 
+      {!loading && (buckets.upcoming.length > 0 || buckets.completed.length > 0) && (
+        <div className="dashboard-sections">
           <TaskSection
             id="upcoming"
             title="Upcoming"
             tasks={buckets.upcoming}
-            emptyMessage="Nothing scheduled ahead yet."
             onToggleComplete={handleToggleComplete}
             onDelete={handleDelete}
             onEdit={handleEdit}
           />
-
           <TaskSection
             id="completed"
             title="Completed"
             tasks={buckets.completed}
-            emptyMessage="Nothing completed yet — that's alright."
             onToggleComplete={handleToggleComplete}
             onDelete={handleDelete}
             onEdit={handleEdit}
           />
         </div>
       )}
+
+      <div className="today-quickadd">
+        <QuickAdd onAdd={handleAdd} />
+      </div>
     </div>
   );
 }

@@ -11,18 +11,6 @@ function Routines() {
   const [error, setError] = useState(null);
   const [formMode, setFormMode] = useState(null); // null | 'create' | routine object being edited
 
-  const load = async () => {
-    try {
-      const data = await routinesApi.getRoutines();
-      setRoutines(data);
-      setError(null);
-    } catch (err) {
-      setError(err.message || 'Failed to load routines');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
     let cancelled = false;
 
@@ -43,6 +31,16 @@ function Routines() {
       cancelled = true;
     };
   }, []);
+
+  const load = async () => {
+    try {
+      const data = await routinesApi.getRoutines();
+      setRoutines(data);
+      setError(null);
+    } catch (err) {
+      setError(err.message || 'Failed to load routines');
+    }
+  };
 
   const handleSave = async (data) => {
     try {
@@ -72,6 +70,7 @@ function Routines() {
     const today = toDateOnlyString(new Date());
     try {
       await routinesApi.pauseRoutine(routine._id, today);
+      setFormMode(null);
       await load();
     } catch (err) {
       setError(err.message || 'Failed to pause routine');
@@ -82,15 +81,37 @@ function Routines() {
     const today = toDateOnlyString(new Date());
     try {
       await routinesApi.unpauseRoutine(routine._id, today);
+      setFormMode(null);
       await load();
     } catch (err) {
       setError(err.message || 'Failed to resume routine');
     }
   };
 
+  const handleSetTaskOverride = async (payload) => {
+    try {
+      const updated = await routinesApi.setTaskOverride(formMode._id, payload);
+      setRoutines((prev) => prev.map((r) => (r._id === updated._id ? updated : r)));
+      setFormMode(updated);
+    } catch (err) {
+      setError(err.message || 'Failed to set override');
+    }
+  };
+
+  const handleRemoveTaskOverride = async (routineTaskId, date) => {
+    try {
+      const updated = await routinesApi.removeTaskOverride(formMode._id, date, routineTaskId);
+      setRoutines((prev) => prev.map((r) => (r._id === updated._id ? updated : r)));
+      setFormMode(updated);
+    } catch (err) {
+      setError(err.message || 'Failed to remove override');
+    }
+  };
+
   const handleDelete = async (routine) => {
     if (!window.confirm(`Delete "${routine.name}"? This can't be undone.`)) return;
     const previous = routines;
+    setFormMode(null);
     setRoutines((prev) => prev.filter((r) => r._id !== routine._id));
     try {
       await routinesApi.deleteRoutine(routine._id);
@@ -101,15 +122,12 @@ function Routines() {
   };
 
   return (
-    <div className="dashboard routines-page">
-      <header className="dashboard-header">
-        <div>
-          <h1>Routines</h1>
-          <p className="dashboard-date">Reusable plans for your recurring days.</p>
-        </div>
+    <div className="routines-page">
+      <header className="routines-header">
+        <h1>Routines</h1>
         {!formMode && (
           <button type="button" className="button-primary" onClick={() => setFormMode('create')}>
-            New routine
+            + Create routine
           </button>
         )}
       </header>
@@ -128,6 +146,11 @@ function Routines() {
           initialRoutine={formMode !== 'create' ? formMode : null}
           onSave={handleSave}
           onCancel={() => setFormMode(null)}
+          onPauseToday={handlePauseToday}
+          onResumeToday={handleResumeToday}
+          onDelete={handleDelete}
+          onSetTaskOverride={handleSetTaskOverride}
+          onRemoveTaskOverride={handleRemoveTaskOverride}
         />
       )}
 
@@ -136,19 +159,16 @@ function Routines() {
       ) : routines.length === 0 && !formMode ? (
         <p className="task-section-empty">
           No routines yet. A routine is a reusable set of tasks for the days that repeat — mornings, a
-          weekday plan, laundry day. Add one when you're ready.
+          weekday plan, laundry day. Create one when you're ready.
         </p>
       ) : (
-        <div className="routine-list">
+        <div className="routine-grid">
           {routines.map((routine) => (
             <RoutineCard
               key={routine._id}
               routine={routine}
               onToggleActive={handleToggleActive}
-              onPauseToday={handlePauseToday}
-              onResumeToday={handleResumeToday}
               onEdit={setFormMode}
-              onDelete={handleDelete}
             />
           ))}
         </div>

@@ -1,6 +1,6 @@
 const express = require('express');
 const Routine = require('../models/Routine');
-const { generateForDate } = require('../services/routineGenerator');
+const { generateForDate, reconcileOverride } = require('../services/routineGenerator');
 const { toDateOnly } = require('../utils/date');
 const router = express.Router();
 
@@ -121,6 +121,82 @@ router.delete('/:id/pause', async (req, res) => {
     const target = toDateOnly(date).getTime();
     routine.pausedDates = routine.pausedDates.filter(
       (p) => toDateOnly(p).getTime() !== target
+    );
+    await routine.save();
+    res.json(routine);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST create or replace a per-task, per-date override (skip/move/replace
+// a single occurrence of a single routine task, without touching the
+// routine template). Reconciles immediately against an already-generated
+// task for that date, if one exists.
+router.post('/:id/task-overrides', async (req, res) => {
+  try {
+    const { date, routineTaskId, action, newTime, newTitle, newDuration } = req.body;
+    if (!date || !routineTaskId || !action) {
+      return res.status(400).json({ error: 'date, routineTaskId, and action are required' });
+    }
+    if (!['SKIP', 'MOVE', 'REPLACE'].includes(action)) {
+      return res.status(400).json({ error: 'action must be SKIP, MOVE, or REPLACE' });
+    }
+    if (action === 'MOVE' && !newTime) {
+      return res.status(400).json({ error: 'newTime is required for a MOVE override' });
+    }
+    if (action === 'REPLACE' && !newTitle) {
+      return res.status(400).json({ error: 'newTitle is required for a REPLACE override' });
+    }
+
+    const routine = await Routine.findById(req.params.id);
+    if (!routine) return res.status(404).json({ error: 'Routine not found' });
+
+    const routineTaskExists = routine.tasks.some((t) => t._id.toString() === routineTaskId);
+    if (!routineTaskExists) return res.status(404).json({ error: 'Routine task not found' });
+
+    const target = toDateOnly(date);
+
+    // Replace any existing override for this same task + date rather than stacking them.
+    routine.taskOverrides = routine.taskOverrides.filter(
+      (o) => !(o.routineTaskId === routineTaskId && toDateOnly(o.date).getTime() === target.getTime())
+    );
+    const override = {
+      date: target,
+      routineTaskId,
+      action,
+      newTime: action === 'MOVE' ? newTime : null,
+      newTitle: action === 'REPLACE' ? newTitle : null,
+      newDuration: action === 'REPLACE' && newDuration !== undefined ? newDuration : null,
+    };
+    routine.taskOverrides.push(override);
+    await routine.save();
+
+    await reconcileOverride(routine, override);
+
+    res.json(routine);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE remove a per-task, per-date override, reverting that occurrence
+// back to the routine's normal template. Does not undo whatever already
+// happened to an already-generated task (e.g. a skip that already
+// deleted it) — it only stops the override from applying going forward.
+router.delete('/:id/task-overrides', async (req, res) => {
+  try {
+    const { date, routineTaskId } = req.query;
+    if (!date || !routineTaskId) {
+      return res.status(400).json({ error: 'date and routineTaskId are required' });
+    }
+
+    const routine = await Routine.findById(req.params.id);
+    if (!routine) return res.status(404).json({ error: 'Routine not found' });
+
+    const target = toDateOnly(date).getTime();
+    routine.taskOverrides = routine.taskOverrides.filter(
+      (o) => !(o.routineTaskId === routineTaskId && toDateOnly(o.date).getTime() === target)
     );
     await routine.save();
     res.json(routine);

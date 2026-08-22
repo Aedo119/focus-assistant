@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { WEEKDAY_LABELS } from '../utils/date';
+import { WEEKDAY_LABELS, toDateOnlyString } from '../utils/date';
+import RoutineTaskOverrides from './RoutineTaskOverrides';
 
 let localRowId = 0;
 function newRow(task) {
@@ -12,13 +13,25 @@ function newRow(task) {
   };
 }
 
-function RoutineForm({ initialRoutine, onSave, onCancel }) {
+function RoutineForm({
+  initialRoutine,
+  onSave,
+  onCancel,
+  onPauseToday,
+  onResumeToday,
+  onDelete,
+  onSetTaskOverride,
+  onRemoveTaskOverride,
+}) {
   const [name, setName] = useState(initialRoutine?.name || '');
   const [days, setDays] = useState(initialRoutine?.days || []);
   const [rows, setRows] = useState(
     initialRoutine?.tasks?.length ? initialRoutine.tasks.map(newRow) : [newRow()]
   );
   const [error, setError] = useState(null);
+
+  const todayStr = toDateOnlyString(new Date());
+  const isPausedToday = initialRoutine?.pausedDates?.some((d) => toDateOnlyString(d) === todayStr);
 
   const toggleDay = (day) => {
     setDays((prev) => (prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day].sort()));
@@ -138,6 +151,31 @@ function RoutineForm({ initialRoutine, onSave, onCancel }) {
       </div>
 
       {error && <p className="form-error">{error}</p>}
+
+      {initialRoutine && (
+        <RoutineTaskOverrides
+          routine={initialRoutine}
+          onSetOverride={onSetTaskOverride}
+          onRemoveOverride={onRemoveTaskOverride}
+        />
+      )}
+
+      {initialRoutine && (
+        <div className="routine-form-extra-actions">
+          {isPausedToday ? (
+            <button type="button" className="button-link" onClick={() => onResumeToday(initialRoutine)}>
+              Resume for today
+            </button>
+          ) : (
+            <button type="button" className="button-link" onClick={() => onPauseToday(initialRoutine)}>
+              Pause for today
+            </button>
+          )}
+          <button type="button" className="button-link is-destructive" onClick={() => onDelete(initialRoutine)}>
+            Delete routine
+          </button>
+        </div>
+      )}
 
       <div className="form-actions">
         <button type="button" className="button-secondary" onClick={onCancel}>

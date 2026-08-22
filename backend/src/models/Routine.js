@@ -25,6 +25,39 @@ const routineTaskSchema = new mongoose.Schema({
   },
 });
 
+// A one-off change to a single routine task on a single date, without
+// touching the routine template itself:
+//   SKIP    - don't generate this task on this date
+//   MOVE    - generate it at a different time this date only
+//   REPLACE - generate a different title (and optionally duration) this date only
+const taskOverrideSchema = new mongoose.Schema({
+  date: {
+    type: Date,
+    required: true,
+  },
+  routineTaskId: {
+    type: String,
+    required: true,
+  },
+  action: {
+    type: String,
+    enum: ['SKIP', 'MOVE', 'REPLACE'],
+    required: true,
+  },
+  newTime: {
+    type: String, // used by MOVE
+    default: null,
+  },
+  newTitle: {
+    type: String, // used by REPLACE
+    default: null,
+  },
+  newDuration: {
+    type: Number, // used by REPLACE, optional
+    default: null,
+  },
+});
+
 const routineSchema = new mongoose.Schema(
   {
     name: {
@@ -55,6 +88,12 @@ const routineSchema = new mongoose.Schema(
     // saved and active for every other occurrence.
     pausedDates: {
       type: [Date],
+      default: [],
+    },
+    // Per-task, per-date overrides — skip/move/replace a single occurrence
+    // of a single routine task without editing the routine template.
+    taskOverrides: {
+      type: [taskOverrideSchema],
       default: [],
     },
   },

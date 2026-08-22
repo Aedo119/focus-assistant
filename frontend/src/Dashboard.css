@@ -1,36 +1,44 @@
-.dashboard {
-  max-width: 640px;
+.today-page {
+  max-width: 1100px;
   width: 100%;
   margin: 0 auto;
-  padding: 2.5rem 1.75rem 4rem;
+  padding: 2.5rem 2rem 4rem;
   text-align: left;
 }
 
-.dashboard-header {
+.today-header {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 0.5rem 1rem;
-  margin-bottom: 2.25rem;
+  margin-bottom: 2rem;
 }
 
-.dashboard-header h1 {
-  font-size: 21px;
+.today-header h1 {
+  font-size: 30px;
+  font-weight: 700;
+}
+
+.today-date {
+  color: var(--accent);
+  font-size: 13.5px;
   font-weight: 600;
+  margin-top: 0.5rem;
 }
 
-.dashboard-date {
+.today-subtitle {
   color: var(--text);
-  font-size: 13px;
-  margin-top: 2px;
+  font-size: 14px;
+  margin-top: 0.35rem;
 }
 
-.dashboard-clock {
+.today-clock {
   font-family: var(--mono);
   font-size: 15px;
   color: var(--text);
   font-variant-numeric: tabular-nums;
+  margin-top: 0.3rem;
 }
 
 .dashboard-error {
@@ -61,67 +69,206 @@
   font-size: 14px;
 }
 
-/* Quick add */
+/* Two-column layout: timeline + attention panel */
 
-.quick-add {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-bottom: 2.75rem;
+.today-layout {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 2.5rem;
+  align-items: start;
 }
 
-.quick-add-input {
-  flex: 1 1 220px;
+.today-main {
   min-width: 0;
-  padding: 0.6rem 0.85rem;
-  font-size: 14px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--surface);
-  color: var(--text-h);
 }
 
-.quick-add-input:focus,
-.quick-add-date:focus {
-  outline: none;
-  border-color: var(--accent-border);
-}
-
-.quick-add-date {
-  padding: 0.6rem 0.65rem;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--surface);
-  color: var(--text-h);
-  font-size: 13px;
-}
-
-.quick-add-date-toggle {
-  background: none;
-  border: 1px solid var(--border);
-  border-radius: 8px;
+.timeline-label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
   color: var(--text);
-  font-size: 13px;
-  padding: 0 0.85rem;
-  white-space: nowrap;
+  opacity: 0.65;
+  margin-bottom: 1rem;
 }
 
-.quick-add-submit {
+/* Timeline */
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+}
+
+.timeline-row {
+  display: grid;
+  grid-template-columns: 48px 20px 1fr;
+  column-gap: 0.75rem;
+}
+
+.timeline-time {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text);
+  padding-top: 0.15rem;
+  text-align: right;
+}
+
+.timeline-track {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.timeline-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  border: 2px solid var(--border);
+  background: var(--surface);
+  padding: 0;
+  margin-top: 0.2rem;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.timeline-dot.is-completed {
+  background: var(--text);
+  border-color: var(--text);
+  opacity: 0.4;
+}
+
+.timeline-dot.is-current {
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-bg);
+}
+
+.timeline-line {
+  width: 1px;
+  flex: 1;
+  min-height: 28px;
+  background: var(--border);
+  margin-top: 0.15rem;
+}
+
+.timeline-content {
+  padding-bottom: 1.5rem;
+}
+
+.timeline-content.is-current {
+  background: var(--accent-bg);
+  border: 1px solid var(--accent-border);
+  border-radius: 10px;
+  padding: 0.6rem 0.85rem;
+  margin-top: -0.1rem;
+  margin-bottom: 0.9rem;
+}
+
+.timeline-content-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.timeline-title {
+  font-size: 14.5px;
+  color: var(--text-h);
+  font-weight: 500;
+}
+
+.timeline-title.is-completed {
+  text-decoration: line-through;
+  color: var(--text);
+  font-weight: 400;
+}
+
+.timeline-now-badge {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--accent);
+  border-radius: 999px;
+  padding: 0.1rem 0.5rem;
+}
+
+.timeline-subtitle {
+  font-size: 12.5px;
+  color: var(--text);
+  margin-top: 0.2rem;
+}
+
+/* Attention card */
+
+.attention-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.1rem 1.15rem;
+  box-shadow: var(--shadow-card);
+}
+
+.attention-eyebrow {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--attention);
+  background: var(--attention-bg);
+  border-radius: 999px;
+  padding: 0.2rem 0.6rem;
+  margin-bottom: 0.7rem;
+}
+
+.attention-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-h);
+  margin-bottom: 0.35rem;
+}
+
+.attention-body {
+  font-size: 13px;
+  color: var(--text);
+  margin-bottom: 1rem;
+}
+
+.attention-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.attention-button-primary {
+  flex: 1;
   background: var(--accent);
   color: #fff;
   border: none;
   border-radius: 8px;
-  padding: 0 1.1rem;
+  padding: 0.55rem 0.5rem;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
 }
 
-/* Sections */
+.attention-button-primary:hover {
+  background: var(--accent-hover);
+}
+
+.attention-button-secondary {
+  flex: 1;
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-h);
+  border-radius: 8px;
+  padding: 0.55rem 0.5rem;
+  font-size: 12.5px;
+}
+
+/* Upcoming / Completed sections (reuses .task-card etc from TaskCard.jsx) */
 
 .dashboard-sections {
   display: flex;
   flex-direction: column;
   gap: 1.75rem;
+  margin-top: 2.75rem;
+  max-width: 640px;
 }
 
 .task-section-header {
@@ -132,10 +279,11 @@
 }
 
 .task-section-header h2 {
-  font-size: 12.5px;
+  font-size: 12px;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.07em;
   color: var(--text);
+  opacity: 0.65;
   font-weight: 600;
 }
 
@@ -150,17 +298,11 @@
   padding: 0.4rem 0;
 }
 
-.task-section.tone-overdue .task-section-header h2 {
-  color: var(--attention);
-}
-
 .task-section-list {
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
 }
-
-/* Task card */
 
 .task-card {
   display: flex;
@@ -171,11 +313,6 @@
   border-radius: 8px;
   background: var(--surface);
   min-width: 0;
-}
-
-.tone-overdue .task-card {
-  border-color: var(--attention-border);
-  background: var(--attention-bg);
 }
 
 .task-card.is-completed {
@@ -259,12 +396,84 @@
   color: var(--attention);
 }
 
-@media (max-width: 480px) {
-  .dashboard {
-    padding: 1.75rem 1.1rem 3rem;
-  }
+/* Quick add — pinned pill bar at the bottom of the page */
 
-  .task-card-delete {
-    opacity: 0.5;
+.today-quickadd {
+  margin-top: 2.75rem;
+  max-width: 640px;
+}
+
+.quick-add {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.35rem 0.4rem 0.35rem 1rem;
+  box-shadow: var(--shadow-card);
+}
+
+.quick-add-input {
+  flex: 1 1 220px;
+  min-width: 0;
+  padding: 0.5rem 0.2rem;
+  font-size: 14px;
+  border: none;
+  background: none;
+  color: var(--text-h);
+}
+
+.quick-add-input:focus {
+  outline: none;
+}
+
+.quick-add-date {
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--text-h);
+  font-size: 13px;
+}
+
+.quick-add-date:focus {
+  outline: none;
+  border-color: var(--accent-border);
+}
+
+.quick-add-date-toggle {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text);
+  font-size: 13px;
+  padding: 0 0.85rem;
+  white-space: nowrap;
+}
+
+.quick-add-submit {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  padding: 0 1.2rem;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.quick-add-submit:hover {
+  background: var(--accent-hover);
+}
+
+@media (max-width: 820px) {
+  .today-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .today-page {
+    padding: 1.75rem 1.1rem 3rem;
   }
 }

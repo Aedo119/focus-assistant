@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import Sidebar from './components/Sidebar';
 import Dashboard from './Dashboard';
 import Routines from './Routines';
 import './App.css';
@@ -8,24 +9,8 @@ function App() {
 
   return (
     <div className="app-shell">
-      <nav className="app-nav">
-        <button
-          type="button"
-          className={`app-nav-item ${view === 'today' ? 'is-active' : ''}`}
-          onClick={() => setView('today')}
-        >
-          Today
-        </button>
-        <button
-          type="button"
-          className={`app-nav-item ${view === 'routines' ? 'is-active' : ''}`}
-          onClick={() => setView('routines')}
-        >
-          Routines
-        </button>
-      </nav>
-
-      {view === 'today' ? <Dashboard /> : <Routines />}
+      <Sidebar view={view} onNavigate={setView} />
+      <main className="app-content">{view === 'routines' ? <Routines /> : <Dashboard />}</main>
     </div>
   );
 }

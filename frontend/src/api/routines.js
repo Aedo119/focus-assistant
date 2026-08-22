@@ -63,6 +63,23 @@ export async function unpauseRoutine(id, date) {
   return handle(res);
 }
 
+export async function setTaskOverride(routineId, data) {
+  const res = await fetch(`${API_BASE}/routines/${routineId}/task-overrides`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  return handle(res);
+}
+
+export async function removeTaskOverride(routineId, date, routineTaskId) {
+  const res = await fetch(
+    `${API_BASE}/routines/${routineId}/task-overrides?date=${encodeURIComponent(date)}&routineTaskId=${encodeURIComponent(routineTaskId)}`,
+    { method: 'DELETE' }
+  );
+  return handle(res);
+}
+
 export async function generateToday(date) {
   const res = await fetch(`${API_BASE}/routines/generate`, {
     method: 'POST',

@@ -7,16 +7,17 @@
 :root {
   /* Neutral, warm, low-contrast palette. No blue/purple tones. */
   --text: #6b6963;
-  --text-h: #2b2a26;
-  --bg: #fbfaf8;
+  --text-h: #232219;
+  --bg: #f7f5f0;
   --surface: #ffffff;
   --border: #e6e3dd;
   --muted-bg: #f2f0eb;
 
-  /* Single calm accent (sage green) used sparingly. */
-  --accent: #5b7c63;
-  --accent-bg: #e9efe9;
-  --accent-border: #b9cdbc;
+  /* Single calm accent (forest sage) used sparingly. */
+  --accent: #3f7758;
+  --accent-hover: #35664c;
+  --accent-bg: #e6efe8;
+  --accent-border: #bcd5c5;
 
   /* Attention color for overdue items — warm amber, not red. */
   --attention: #93692c;
@@ -25,6 +26,9 @@
 
   --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
   --mono: ui-monospace, Consolas, monospace;
+
+  --shadow-card: 0 1px 2px rgba(30, 25, 15, 0.04), 0 10px 24px -8px rgba(30, 25, 15, 0.1);
+  --radius: 12px;
 
   font: 15px/1.55 var(--sans);
   color-scheme: light;
